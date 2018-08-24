@@ -66,8 +66,11 @@ class MemoryBackend(AbstractBackend):
         self.by_time = collections.defaultdict(list)
 
     def set(self, timestamp, task_id, args, kw):
-        if timestamp.tzinfo is None:
-            raise ValueError('Timezone required, got %s', timestamp)
+        """
+            Comment the timezone condition
+        """
+        # if timestamp.tzinfo is None:
+        #     raise ValueError('Timezone required, got %s', timestamp)
         self.by_id[task_id] = serialize([args, kw])
         self.by_time[serialize_timestamp(timestamp)].append(task_id)
 
@@ -126,8 +129,8 @@ class RedisBackend(AbstractBackend):
             connection_pool=self.redis.ConnectionPool(**self.connparams))
 
     def set(self, timestamp, task_id, args, kw):
-        if timestamp.tzinfo is None:
-            raise ValueError('Timezone required, got %s', timestamp)
+        # if timestamp.tzinfo is None:
+        #     raise ValueError('Timezone required, got %s', timestamp)
         timestamp = serialize_timestamp(timestamp)
         self.client.set(task_id, serialize([args, kw]))
         self.client.zadd(self.BY_TIME_KEY, timestamp, task_id)
@@ -181,12 +184,12 @@ class PickleFallbackJSONEncoder(json.JSONEncoder):
 
     def default(self, o):
         raw = pickle.dumps(o)
-        return self.PICKLE_MARKER + raw
+        return self.PICKLE_MARKER + str(raw)
 
     @classmethod
     def decode_dict(cls, o):
         for key, value in o.items():
-            if isinstance(value, basestring) and value.startswith(
+            if isinstance(value, bytes) and value.startswith(
                     cls.PICKLE_MARKER):
                 raw = value.replace(cls.PICKLE_MARKER, '', 1)
                 o[key] = pickle.loads(raw)

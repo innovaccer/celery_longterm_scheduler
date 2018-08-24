@@ -20,9 +20,18 @@ class Task(celery.Task):
             timestamp = options.pop('eta')
 
             # copy&paste from celery.app.task.Task.apply_async()
-            if self.__self__ is not None:
-                args = args if isinstance(args, tuple) else tuple(args or ())
-                args = (self.__self__,) + args
+            """
+                Comment the below if contion and add another clause
+                because celery is updated to 4.2.1 from 3.xx
+
+            """
+            # if self.__self__ is not None:
+            #     args = args if isinstance(args, tuple) else tuple(args or ())
+            #     args = (self.__self__,) + args
+            #     shadow = shadow or self.shadow_name(args, kwargs, options)
+            if self.__v2_compat__:
+                shadow = shadow or self.shadow_name(self(), args, kwargs, options)
+            else:
                 shadow = shadow or self.shadow_name(args, kwargs, options)
 
             preopts = self._get_exec_options()
